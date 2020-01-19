@@ -1,42 +1,43 @@
 import pygame
 
 level = [
-    '------------------------------------------------------------------------',
-    '-                                                                      -',
-    '-                                                                      -',
-    '-                                                       -----          -',
-    '-                        ---                               ---         -',
-    '-                         ---                          ------          -',
-    '-                                                                      -',
-    '-          ----                                                        -',
-    '-           ---                 -   -                                  -',
-    '-                             -       -          -                     -',
-    '-                              -------          ---                    -',
-    '-                                                -                     -',
-    '-                      ---                                             -',
-    '-                      ---                                             -',
-    '-                                                                      -',
-    '-                                                                      -',
-    '-            --                                 ----                   -',
-    '-           ---                                  --                    -',
-    '-                                                                      -',
-    '-                                                                      -',
-    '------------------------------------------------------------------------'
+    '------------------------------------------------------------------------------------------',
+    '-                                                                                        -',
+    '-                                                                             ---        -',
+    '-                                                       -----                 ---        -',
+    '-                        ---                               ---                ---        -',
+    '-                         ---                          ------                            -',
+    '-                                                                                        -',
+    '-          ----                                                                          -',
+    '-           ---                 -   -                                                    -',
+    '-                                                -                        ---            -',
+    '-                              -     -          ---                       ---            -',
+    '-                               -----            -                                       -',
+    '-                      ---                                                               -',
+    '-                      ---                                       ---                     -',
+    '-                                                                 --            ---      -',
+    '-                                                                  --            ---     -',
+    '-            --                   ---           ----                           ----      -',
+    '-           ---                   ---            --                                      -',
+    '-                                                                                        -',
+    '-                                                                                        -',
+    '------------------------------------------------------------------------------------------'
 ]
 
 WIN_WIDTH, WIN_HEIGHT = 780, 630
 BG_COLOR = (192, 192, 192)
 BRICK_WIDTH = BRICK_HEIGHT = 30
-BRICK_COLOR = (0, 128, 0)
-BRICK_COLOR_2 = (255, 128, 0)
+BRICK_COLOR = (200, 0, 0)
+BRICK_COLOR_2 = (255, 255, 255)
 FPS = 60
 RED = (255, 0, 0)
 clock = pygame.time.Clock()
 PLAYER_SIZE = 40
-BG_SPEED = 5
+BG_SPEED = 3
 dx = 0
 PLAYER_SPEED = 11
 penalty = 0
+BTN_W, BTN_H = 220, 60
 
 pygame.init()
 pygame.display.set_caption('первая игра')
@@ -44,13 +45,20 @@ screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 
 player = pygame.Surface((PLAYER_SIZE, PLAYER_SIZE))
 player.set_colorkey((0, 0, 0))
-pygame.draw.circle(player, (0, 0, 250), (PLAYER_SIZE // 2, PLAYER_SIZE // 2), PLAYER_SIZE // 2)
-pygame.draw.circle(player, (255, 215, 0), (12, 15), 4)
-pygame.draw.circle(player, (255, 215, 0), (28, 15), 4)
-pygame.draw.arc(player, (255, 215, 0), (8, 12, 24, 20), 3.6, 6.0, 3)
+pygame.draw.circle(player, (255, 255, 255), (PLAYER_SIZE // 2, PLAYER_SIZE // 2), PLAYER_SIZE // 2)
+pygame.draw.circle(player, (1, 1, 1), (12, 15), 4)
+pygame.draw.circle(player, (1, 1, 1), (28, 15), 4)
+pygame.draw.circle(player, (255, 0, 0), (20, 23), 4)
+pygame.draw.arc(player, (255, 0, 0), (8, 12, 24, 20), 3.6, 6.0, 3)
+pygame.draw.circle(player, (255, 0, 0), (12, 3), 6)
 player_rect = player.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
 
 text = pygame.font.SysFont('Arial', 22, True, False)
+text_xy = ((WIN_WIDTH - text.size(f'штрафных очков{round(penalty, 1)}')[0]) // 2, 30)
+
+btn = pygame.Surface((BTN_W, BTN_H))
+text1 = 'ИГРАТЬ СНОВА?'
+text1_xy = text.size(text1)
 
 run = True
 while run:
@@ -70,7 +78,12 @@ while run:
 
     screen.fill(BG_COLOR)
 
-    dx -= BG_SPEED
+    if dx > -WIN_WIDTH * 4:
+        dx -= BG_SPEED
+    else:
+        if player_rect.x < WIN_WIDTH - PLAYER_SIZE:
+            player_rect.x += PLAYER_SPEED
+
     x = dx
     y = 0
     for row in level:
@@ -86,10 +99,9 @@ while run:
         x = dx
 
     screen.blit(player, player_rect)
-    pygame.display.set_caption(f' FPS: {round(clock.get_fps(), 2)}')
     screen.blit(
-        text.render(f'штрафных очков{penalty}', True, RED, None),
-        (WIN_WIDTH - text.size(f'штрафных очков{penalty}')[0] - 5, 5)
-    )
-    pygame.display.update()
+        text.render(f'штрафных очков{penalty, 1}', True, RED, None), text_xy)
+
+    pygame.display.set_caption(f' FPS: {round(clock.get_fps(), 2)}')
     clock.tick(FPS)
+    pygame.display.update()
