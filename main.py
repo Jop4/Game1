@@ -1,27 +1,29 @@
 import pygame
+import sounddevice as sd
+import numpy
 
 level = [
-    '------------------------------------------------------------------------------------------',
-    '-                                                                                        -',
-    '-  --- -    -  - -  -   ---  - - - -                                          ---        -',
-    '-   -  ---  -  --  - -  - -   -  ---                    -----                 ---        -',
-    '-   -  ---  -  - - - -  ---   -  - -                       ---                ---        -',
-    '-                                                      ------                            -',
-    '-                                                                                        -',
-    '-          ----                                                                          -',
-    '-           ---                 -   -                                                    -',
-    '-                                                -                        ---            -',
-    '-                              -     -          ---                       ---            -',
-    '-                               -----            -                                       -',
-    '-                      ---                                                               -',
-    '-                      ---                                       ---                     -',
-    '-                                                                 --            ---      -',
-    '-                                                                  --            ---     -',
-    '-            --                   ---           ----                           ----      -',
-    '-           ---                   ---            --                                      -',
-    '-                                                                                        -',
-    '-                                                                                        -',
-    '------------------------------------------------------------------------------------------'
+    '----------------------------------------------------------------------------------------------------',
+    '-                                                                                                  -',
+    '-  --- -    -  - -  -   ---  - - - -                                          ---                  -',
+    '-   -  ---  -  --  - -  - -   -  ---                    -----                 -----                 -',
+    '-   -  ---  -  - - - -  ---   -  - -                       ---                ---                  -',
+    '-                                                      ------                                      -',
+    '-                                                                                                 -',
+    '-          ----                                                                                    -',
+    '-           ---                 -   -                                                              -',
+    '-                                                -                         ---                      -',
+    '-                              -     -          ---                       ---                      -',
+    '-                               -----            -                                                 -',
+    '-                      ---                                                                         -',
+    '-                      ---                                       ---                               -',
+    '-                                                                 --            ---                -',
+    '-                                                                  --            ---               -',
+    '-            --                   ---           ----                           ----                -',
+    '-           ---                   ---            --                                                -',
+    '-                                                                                                  -',
+    '-                                                                                                  -',
+    '----------------------------------------------------------------------------------------------------'
 ]
 
 WIN_WIDTH, WIN_HEIGHT = 780, 630
@@ -56,7 +58,8 @@ def face(color):
     pygame.draw.circle(player, (1, 1, 1), (28, 15), 4)
     pygame.draw.circle(player, (255, 0, 0), (20, 23), 4)
     pygame.draw.arc(player, (255, 0, 0), (8, 12, 24, 20), 3.6, 6.0, 3)
-    pygame.draw.circle(player, (255, 0, 0), (12, 3), 6)
+    pygame.draw.circle(player, (255, 0, 0), (8, 6), 7)
+    pygame.draw.circle(player, (255, 0, 0), (32, 6), 7)
 
 
 player_rect = player.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
@@ -69,68 +72,82 @@ btn.fill(BLUE)
 text1 = 'ИГРАТЬ СНОВА?'
 text1_xy = text.size(text1)
 
+result = WIN_HEIGHT / 2.0
+yyy = [player_rect.y] * 20
+
+
+def audio_callback(indata, frames, time, status):
+    volume = numpy.linalg.norm(indata) * 20
+    yyy.apend(volume)
+    yyy.pop(0)
+    result[0] = sum(yyy) / len(yyy)
+
+
 color = WHITE
 face(color)
 run = True
-while run:
-    for e in pygame.event.get():
-        if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
-            run = False
+stream = sd.InputStream(callback=audio_callback)
+with stream:
+    while run:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT or e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                run = False
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_RIGHT]:
-        player_rect.x += PLAYER_SPEED
-    if keys[pygame.K_LEFT]:
-        player_rect.x -= PLAYER_SPEED
-    if keys[pygame.K_UP]:
-        player_rect.y -= PLAYER_SPEED
-    if keys[pygame.K_DOWN]:
-        player_rect.y += PLAYER_SPEED
-
-    screen.fill(BG_COLOR)
-    if color == GOLD:
-        color = WHITE
-        face(color)
-
-    screen.fill(BG_COLOR)
-
-    if dx > -WIN_WIDTH * 4:
-        dx -= BG_SPEED
-    else:
-        if player_rect.x < WIN_WIDTH - PLAYER_SIZE:
+        player_rect.y = WIN_HEIGHT - result[0]
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RIGHT]:
             player_rect.x += PLAYER_SPEED
+        if keys[pygame.K_LEFT]:
+            player_rect.x -= PLAYER_SPEED
+        if keys[pygame.K_UP]:
+            player_rect.y -= PLAYER_SPEED
+        if keys[pygame.K_DOWN]:
+            player_rect.y += PLAYER_SPEED
 
-    x = dx
-    y = 0
-    for row in level:
-        for col in row:
-            if col == '-':
-                # screen.blit(brick, (x, y))
-                brick = pygame.draw.rect(screen, BRICK_COLOR, [x, y, BRICK_WIDTH, BRICK_HEIGHT])
-                pygame.draw.rect(screen, BRICK_COLOR_2, [x, y, BRICK_WIDTH, BRICK_HEIGHT], 2)
-                if brick.colliderect(player_rect):
-                    if color == WHITE:
-                        color = GOLD
-                        face(color)
-                    penalty += 0.1
-            x += BRICK_WIDTH
-        y += BRICK_HEIGHT
+        screen.fill(BG_COLOR)
+        if color == GOLD:
+            color = WHITE
+            face(color)
+
+        screen.fill(BG_COLOR)
+
+        if dx > -WIN_WIDTH * 4:
+            dx -= BG_SPEED
+        else:
+            if player_rect.x < WIN_WIDTH - PLAYER_SIZE:
+                player_rect.x += PLAYER_SPEED
+
         x = dx
+        y = 0
+        for row in level:
+            for col in row:
+                if col == '-':
+                    # screen.blit(brick, (x, y))
+                    brick = pygame.draw.rect(screen, BRICK_COLOR, [x, y, BRICK_WIDTH, BRICK_HEIGHT])
+                    pygame.draw.rect(screen, BRICK_COLOR_2, [x, y, BRICK_WIDTH, BRICK_HEIGHT], 2)
+                    if brick.colliderect(player_rect):
+                        if color == WHITE:
+                            color = GOLD
+                            face(color)
+                        penalty += 0.1
+                x += BRICK_WIDTH
+            y += BRICK_HEIGHT
+            x = dx
 
-    if player_rect.x < WIN_WIDTH - PLAYER_SIZE:
-        screen.blit(player, player_rect)
-        screen.blit(
-            text.render(f'штрафных очков: {round(penalty, 1)}', True, RED, None), text_xy)
-    else:
-        screen.blit(btn, ((WIN_WIDTH - BTN_W) // 2, WIN_HEIGHT // 2))
-        btn.blit(
-            text.render(text1, True, WHITE, None),
-            ((BTN_W - text1_xy[0]) // 2, (BTN_H - text1_xy[1]) // 2))
-        screen.blit(
-            text.render(f'штрафных очков: {round(penalty, 1)}', True, RED, None),
-            ((WIN_WIDTH - text.size(f'штрафных очков: {round(penalty, 1)}')[0]) // 2,
-             WIN_HEIGHT // 2 - BTN_H))
+        if player_rect.x < WIN_WIDTH - PLAYER_SIZE:
+            screen.blit(player, player_rect)
+            screen.blit(
+                text.render(f'штрафных очков: {round(penalty, 1)}', True, RED, None), text_xy)
+        else:
+            screen.blit(btn, ((WIN_WIDTH - BTN_W) // 2, WIN_HEIGHT // 2))
+            btn.blit(
+                text.render(text1, True, WHITE, None),
+                ((BTN_W - text1_xy[0]) // 2, (BTN_H - text1_xy[1]) // 2))
+            screen.blit(
+                text.render(f'штрафных очков: {round(penalty, 1)}', True, RED, None),
+                ((WIN_WIDTH - text.size(f'штрафных очков: {round(penalty, 1)}')[0]) // 2,
+                 WIN_HEIGHT // 2 - BTN_H))
 
-    pygame.display.set_caption(f' FPS: {round(clock.get_fps(), 2)}')
-    pygame.display.update()
-    clock.tick(FPS)
+        pygame.display.set_caption(f' FPS: {round(clock.get_fps(), 2)}')
+        pygame.display.update()
+        clock.tick(FPS)
